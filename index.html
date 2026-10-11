@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            max-width: 450px; 
+            margin: 100px auto; 
+            text-align: center; 
+            background-color: #f4f6f9;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h2 { color: #007bff; margin-bottom: 20px; }
+        input[type="url"] { 
+            width: 85%; 
+            padding: 12px; 
+            margin-bottom: 15px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 6px; 
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="url"]:focus { border-color: #007bff; }
+        button { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            font-weight: bold;
+            width: 90%;
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:hover { background: #0056b3; }
+        button:active { transform: scale(0.98); }
+        button:disabled { background: #cccccc; cursor: not-allowed; }
+        #result { 
+            margin-top: 25px; 
+            font-size: 16px; 
+            word-break: break-all;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .success { background: #e6f4ea; color: #137333; border: 1px solid #dadce0; }
+        .error { background: #fce8e6; color: #c5221f; border: 1px solid #dadce0; }
+        a { color: #007bff; font-weight: bold; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Go URL Shortener</h2>
+        <input type="url" id="longUrl" placeholder="https://example.com" required>
+        <br>
+        <button id="shortenBtn" onclick="shortenURL()">Shorten Link</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function shortenURL() {
+            const urlInput = document.getElementById('longUrl');
+            const resultDiv = document.getElementById('result');
+            const button = document.getElementById('shortenBtn');
+            
+            const longUrlValue = urlInput.value.trim();
+
+            // 1. Basic validation
+            if (!longUrlValue) {
+                alert("Please enter or paste a URL first!");
+                return;
+            }
+
+            // Clean previous results and disable button during loading
+            resultDiv.className = '';
+            resultDiv.innerHTML = '';
+            button.disabled = true;
+            button.innerText = 'Shortening...';
+
+            try {
+                // 2. Fire the network request to Go backend
+                const response = await fetch('/short', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({ 
+                        long_url: longUrlValue // Matches `json:"long_url"` in Go
+                    })
+                });
+
+                // 3. Handle response failures
+                if (!response.ok) {
+                    throw new Error(`Server returned code ${response.status}`);
+                }
+
+                // 4. Parse response data
+                const data = await response.json();
+                
+                // 5. Update UI with the final clickable short link
+                resultDiv.className = 'success';
+                resultDiv.innerHTML = `Done! <a href="${data.short_url}" target="_blank">${data.short_url}</a>`;
+                
+                // Clear input box on success
+                urlInput.value = '';
+
+            } catch (err) {
+                // Handle visual errors if backend drops out
+                resultDiv.className = 'error';
+                resultDiv.innerText = "Error: Could not connect to Go backend. Make sure your server is running!";
+                console.error("Fetch Error:", err);
+            } finally {
+                // Re-enable the button action
+                button.disabled = false;
+                button.innerText = 'Shorten Link';
+            }
+        }
+    </script>
+</body>
+</html>
