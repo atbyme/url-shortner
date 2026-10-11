@@ -1,4 +1,4 @@
-# My First Go URL Shortener
+# My Go URL Shortener
 
 A lightweight, minimal URL shortener built completely from scratch using **Go's standard `http` package**. This is a hands-on practice project created to learn the fundamentals of Go backend development, HTTP routing, and link handling without relying on heavy external frameworks.
 
